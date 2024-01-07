@@ -47,7 +47,7 @@ class TopDayCard extends StatelessWidget {
               Text(
                 '${day.getDiffDaysNum()}',
                 style: const TextStyle(
-                    fontSize: 90,
+                    fontSize: 70,
                     fontWeight: FontWeight.w600,
                     letterSpacing: -5),
               ),

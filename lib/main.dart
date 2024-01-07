@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:import_days/api/day.dart';
-import 'package:import_days/api/get_data.dart';
-import 'package:import_days/components/day_item.dart';
-import 'package:import_days/components/app_bar.dart';
-import 'package:import_days/components/top_day_card.dart';
+import 'package:import_days/api/file_io.dart';
+import 'package:provider/provider.dart';
+import 'package:import_days/pages/home.dart';
 
 void main() {
   runApp(const HomePage());
@@ -29,75 +28,34 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  DaysStorage daysStorage = DaysStorage();
+
   @override
   Widget build(BuildContext context) {
+
     return FutureBuilder(
-        future: getData(),
-        builder: ((context, snapshot) {
-          if (snapshot.hasData) {
-            List<Day> daysArray = snapshot.data?.daysList ?? [];
-            Day topDay = snapshot.data?.topDay ?? Day('', '', '');
-            return Scaffold(
-              appBar: myAppBar(),
-              body: Container(
-                  padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
-                  color: Colors.grey[600],
-                  child: Column(
-                    children: [
-                      Expanded(
-                          flex: 1,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                  boxShadow: [
-                                    BoxShadow(
-                                      blurRadius: 4,
-                                      color: Color.fromRGBO(0, 0, 0, 0.3),
-                                    )
-                                  ],
-                                  gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.white,
-                                        Color.fromRGBO(230, 230, 230, 1)
-                                      ])),
-                              child: Column(
-                                children: [
-                                  if (topDay.id != '')
-                                    TopDayCard(
-                                      day: topDay,
-                                    ),
-                                  Expanded(
-                                    child: ListView(
-                                      children: [
-                                        Container(
-                                          height: 15,
-                                        ),
-                                        if (daysArray.isNotEmpty)
-                                          for (Day day in daysArray)
-                                            DayItem(
-                                              day: day,
-                                            ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                          )),
-                      Container(
-                        height: 30,
-                      )
-                    ],
-                  )),
-            );
-          } else if (snapshot.hasError) {
-            return const Text('Error');
-          } else {
-            return const Text('loading');
+      future: daysStorage.readData(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          dynamic mapData = snapshot.data;
+          List<Day> daysList = [];
+          final Day topDay;
+          for (dynamic day in mapData['daysList']) {
+            daysList.add(Day.fromJson(day));
           }
-        }));
+          topDay = daysList
+              .where((Day day) => day.id == mapData['topDay'])
+              .toList()[0];
+
+          return ChangeNotifierProvider(
+            create: (context) => UserData(topDay, daysList),
+            child: myApp(),
+          );
+        } else {
+          return const Text('Error');
+        }
+      },
+    );
   }
 }
+
